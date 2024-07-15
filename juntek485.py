@@ -1,19 +1,16 @@
 #!/usr/bin/env python
-import asyncio
-import json
 import argparse
-import traceback
+import json
 import logging
-import signal
-import time
-import yaml
-import serial
 import math
+import time
 
-import paho.mqtt.publish as publish
+from paho.mqtt import publish
+import serial
+import yaml
+
 import config
 
-discovery_info_sent = False
 
 class JTData:
     def __init__(self) -> None:
@@ -23,33 +20,32 @@ class JTData:
 class JTInfo:
     def __init__(self) -> None:
         self.data = JTData()
-        global discovery_info_sent
         self.name = "Juntek Monitor"
-        #Capture data from RS485
-        with serial.Serial(config.RS485, baudrate=115200, timeout=1) as serialHandle:
-            get_values_str = b':R50=1,2,1,\n'
-            serialHandle.write(get_values_str)
-            byte_string = serialHandle.readline()
+        # Capture data from RS485
+        with serial.Serial(config.RS485, baudrate=115200, timeout=1) as serial_handle:
+            get_values_str = b":R50=1,2,1,\n"
+            serial_handle.write(get_values_str)
+            byte_string = serial_handle.readline()
             print(byte_string)
-        #split CSV
+        # split CSV
         string = byte_string.decode()
         string = string.strip()
-        values = string.split(',')
-        #Calculations
-        calc_watts = int(values[2])*int(values[3])/10000
+        values = string.split(",")
+        # Calculations
+        calc_watts = int(values[2]) * int(values[3]) / 10000
 
-        #Formatting the data
-        self.data.jt_batt_v = int(values[2])/100
-        self.data.jt_current = int(values[3])/100
-        self.data.jt_watts = math.ceil(calc_watts*100)/100
-        #self.data.jt_batt_charging = int(values[11])
-        self.data.jt_soc = math.ceil(int(values[4]) / config.BATT_CAP) /10
-        self.data.jt_ah_remaining = int(values[4])/1000
-        self.data.jt_acc_cap = math.ceil(int(values[6])/1000)/100
-        self.data.jt_min_remaining = math.ceil(int(values[7])/60)
-        self.data.jt_temp = int(values[8])-100
+        # Formatting the data
+        self.data.jt_batt_v = int(values[2]) / 100
+        self.data.jt_current = int(values[3]) / 100
+        self.data.jt_watts = math.ceil(calc_watts * 100) / 100
+        # self.data.jt_batt_charging = int(values[11])
+        self.data.jt_soc = math.ceil(int(values[4]) / config.BATT_CAP) / 10
+        self.data.jt_ah_remaining = int(values[4]) / 1000
+        self.data.jt_acc_cap = math.ceil(int(values[6]) / 1000) / 100
+        self.data.jt_min_remaining = math.ceil(int(values[7]) / 60)
+        self.data.jt_temp = int(values[8]) - 100
 
-        #Negative values if Discharging (0)
+        # Negative values if Discharging (0)
         if int(values[11]) == 0:
             self.data.jt_watts_neg = self.data.jt_watts
             self.data.jt_watts = 0
@@ -57,38 +53,37 @@ class JTInfo:
             self.data.jt_watts = self.data.jt_watts
             self.data.jt_watts_neg = 0
 
+        # Output values on screen
+        #       for k, v in self.data.__dict__.items():
+        #           print(f"{k} = {v}")
 
-        #Output values on screen
-#       for k, v in self.data.__dict__.items():
-#           print(f"{k} = {v}")
+        #    def publish(self):
 
+        # Publish Home Assistant discovery info to MQTT on every run
+        logger.info("Publishing Discovery information to Home Assistant")
 
-
-
-#    def publish(self):
-
-        # Publish Home Assistant discovery info to MQTT on first run
-        if discovery_info_sent is False:
-            msg = "Publishing Discovery information to Home Assistant"
-            logger.info(msg)
-
-            f = open("jt_mqtt.yaml", "r")
+        with open("jt_mqtt.yaml", "r", encoding="utf-8") as f:
             y = yaml.safe_load(f)
             for entry in y:
-                if not "unique_id" in entry:
-                    entry["unique_id"] = entry["object_id"] # required for mapping to a device
-                if not "platform" in entry:
+                if "unique_id" not in entry:
+                    # required for mapping to a device
+                    entry["unique_id"] = entry["object_id"]
+                if "platform" not in entry:
                     entry["platform"] = "mqtt"
-                if not "expire_after" in entry:
+                if "expire_after" not in entry:
                     entry["expire_after"] = 90
-                if not "state_topic" in entry:
+                if "state_topic" not in entry:
                     entry["state_topic"] = f"Juntek-Monitor/{entry['unique_id']}"
-                if not "device" in entry:
-                    entry["device"] = {"name": "Juntek Monitor", "identifiers": "BTG065"}
+                if "device" not in entry:
+                    entry["device"] = {
+                        "name": "Juntek Monitor",
+                        "identifiers": "BTG065",
+                    }
 
                 logger.debug(
-                    f"DISCOVERY_PUB=homeassistant/sensor/{entry['object_id']}/config\n"
-                    + "PL={json.dumps(entry)}\n"
+                    "DISCOVERY_PUB=homeassistant/sensor/%s/config\nPL=%s\n",
+                    entry["object_id"],
+                    json.dumps(entry),
                 )
                 publish.single(
                     topic=f"homeassistant/sensor/{entry['object_id']}/config",
@@ -98,8 +93,6 @@ class JTInfo:
                     auth=auth,
                 )
 
-            discovery_info_sent = True
-
         # Combine sensor updates for MQTT
         mqtt_msgs = []
         for k, v in self.data.__dict__.items():
@@ -108,9 +101,6 @@ class JTInfo:
                 print(f"{k} = {v}")
         publish.multiple(mqtt_msgs, hostname=config.MQTT_HOST, auth=auth)
         logger.info("Published updated sensor stats to MQTT")
-
-
-
 
 
 if hasattr(config, "JT_LOG_FILE"):
@@ -145,7 +135,6 @@ if args.debug:
 if not args.quiet:
     logger.addHandler(logging.StreamHandler())
 
-
 logger.info("Starting up")
 
 while True:
@@ -155,5 +144,9 @@ while True:
             break
         time.sleep(args.interval)
     except Exception as err:
-        logger.warning(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Error : {err}, {type(err)}")
+        logger.warning(
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Error : %s, %s",
+            err,
+            type(err),
+        )
         time.sleep(5)
