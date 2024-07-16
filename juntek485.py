@@ -10,17 +10,18 @@ import serial
 import yaml
 
 import config
+from jtdata import JTData
 
-
-class JTData:
-    def __init__(self) -> None:
-        pass
+logger = logging.getLogger("Juntek KF Coulometer")
+logger.setLevel(logging.INFO)
+auth = {"username": config.MQTT_USER, "password": config.MQTT_PASS}
 
 
 class JTInfo:
-    def __init__(self) -> None:
+    def __init__(self, args: argparse.Namespace) -> None:
         self.data = JTData()
         self.name = "Juntek Monitor"
+        self.args = args
         # Capture data from RS485
         with serial.Serial(config.RS485, baudrate=115200, timeout=1) as serial_handle:
             get_values_str = b":R50=1,2,1,\n"
@@ -97,56 +98,57 @@ class JTInfo:
         mqtt_msgs = []
         for k, v in self.data.__dict__.items():
             mqtt_msgs.append({"topic": f"Juntek-Monitor/{k}", "payload": v})
-            if not args.quiet:
+            if not self.args.quiet:
                 print(f"{k} = {v}")
         publish.multiple(mqtt_msgs, hostname=config.MQTT_HOST, auth=auth)
         logger.info("Published updated sensor stats to MQTT")
 
 
-if hasattr(config, "JT_LOG_FILE"):
-    logging.basicConfig(
-        filename=config.JT_LOG_FILE,
-        format="%(asctime)s %(levelname)s:%(message)s",
-        encoding="utf-8",
-        level=logging.WARNING,
-    )
-logger = logging.getLogger("Juntek KF Coulometer")
-logger.setLevel(logging.INFO)
-
-auth = {"username": config.MQTT_USER, "password": config.MQTT_PASS}
-
-parser = argparse.ArgumentParser()
-parser.add_argument("-d", "--debug", action="store_true", help="Enable debug logging")
-parser.add_argument(
-    "-i",
-    "--interval",
-    type=int,
-    help="Run nonstop and query the device every <interval> seconds",
-)
-parser.add_argument(
-    "-q", "--quiet", action="store_true", help="Quiet mode. No output except for errors"
-)
-args = parser.parse_args()
-
-if args.debug:
-    logger.warning("Setting logging level to DEBUG")
-    logger.setLevel(logging.DEBUG)
-
-if not args.quiet:
-    logger.addHandler(logging.StreamHandler())
-
-logger.info("Starting up")
-
-while True:
-    try:
-        jt = JTInfo()
-        if not args.interval:
-            break
-        time.sleep(args.interval)
-    except Exception as err:
-        logger.warning(
-            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Error : %s, %s",
-            err,
-            type(err),
+def main():
+    if hasattr(config, "JT_LOG_FILE"):
+        logging.basicConfig(
+            filename=config.JT_LOG_FILE,
+            format="%(asctime)s %(levelname)s:%(message)s",
+            encoding="utf-8",
+            level=logging.WARNING,
         )
-        time.sleep(5)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument(
+        "-i",
+        "--interval",
+        type=int,
+        help="Run nonstop and query the device every <interval> seconds",
+    )
+    parser.add_argument(
+        "-q", "--quiet", action="store_true", help="Quiet mode. No output except for errors"
+    )
+    args = parser.parse_args()
+
+    if args.debug:
+        logger.warning("Setting logging level to DEBUG")
+        logger.setLevel(logging.DEBUG)
+
+    if not args.quiet:
+        logger.addHandler(logging.StreamHandler())
+
+    logger.info("Starting up")
+
+    while True:
+        try:
+            JTInfo(args)
+            if not args.interval:
+                break
+            time.sleep(args.interval)
+        except Exception as err:
+            logger.warning(
+                "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Error : %s, %s",
+                err,
+                type(err),
+            )
+            time.sleep(5)
+
+
+if __name__ == "main":
+    main()

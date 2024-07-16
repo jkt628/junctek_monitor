@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import argparse
 import asyncio
 import json
@@ -13,24 +12,15 @@ from bleak import BleakScanner, BleakClient, BleakError
 from paho.mqtt import publish
 
 import config
+from jtdata import JTData
 
-# lesniffer
-check = {}
+auth = {"username": config.MQTT_USER, "password": config.MQTT_PASS}
+logger = logging.getLogger("Juntek KF Coulometer")
+logger.setLevel(logging.INFO)
 
 
 class DeviceNotFoundException(Exception):
     pass
-
-
-class JTData:
-    def __init__(self) -> None:
-        self.jt_ah_remaining = 0.0
-        self.jt_batt_v = 0.0
-        self.jt_current = 0.0
-        self.jt_min_remaining = 0
-        self.jt_soc = 0.0
-        self.jt_temp = 0
-        self.jt_watts = 0.0
 
 
 def _add_signal_handlers():
@@ -58,12 +48,14 @@ class JTInfo:
     ADDR = config.JUNTEC_ADDR
     RX_CHARACTERISTIC = "0000fff1-0000-1000-8000-00805f9b34fb"
 
-    def __init__(self) -> None:
+    def __init__(self, args: argparse.Namespace) -> None:
         self.data = JTData()
         self.bt_device = None
         self.name = None
         self.addr = self.ADDR
         self.discovery_info_sent = False
+        self.check = {}
+        self.args = args
 
     def locate_device(self):
         asyncio.run(self._locate_device())
@@ -170,7 +162,7 @@ class JTInfo:
                 key = params_keys[position]
                 values[key] = value_str
         # if dir_of_current does not exist assign from charge or discharge if they exist
-        if "dir_of_current" not in values and "charging" not in check:
+        if "dir_of_current" not in values and "charging" not in self.check:
             if "discharge" in values and "charge" not in values:
                 values["dir_of_current"] = "00"
             elif "charge" in values and "discharge" not in values:
@@ -184,9 +176,9 @@ class JTInfo:
             val_int = int(value)
             if key == "dir_of_current":
                 if value == "01":
-                    check["charging"] = True
+                    self.check["charging"] = True
                 else:
-                    check["charging"] = False
+                    self.check["charging"] = False
             elif key == "voltage":
                 self.data.jt_batt_v = values[key] = val_int / 100
             elif key == "current":
@@ -215,8 +207,8 @@ class JTInfo:
                 self.data.jt_soc = values["soc"] = soc
 
         # Display current as negative numbers if discharging
-        if "charging" in check:
-            if not check["charging"]:
+        if "charging" in self.check:
+            if not self.check["charging"]:
                 if "current" in values:
                     values["current"] *= -1
                     self.data.jt_current = values["current"]
@@ -246,7 +238,10 @@ class JTInfo:
                     if "state_topic" not in entry:
                         entry["state_topic"] = f"Juntek-Monitor/{entry['unique_id']}"
                     if "device" not in entry:
-                        entry["device"] = {"name": "Juntek Monitor", "identifiers": jt.name}
+                        entry["device"] = {
+                            "name": "Juntek Monitor",
+                            "identifiers": self.name,
+                        }
 
                     logger.debug(
                         "DISCOVERY_PUB=homeassistant/sensor/%s/config\nPL=%s\n",
@@ -265,54 +260,55 @@ class JTInfo:
 
         # Combine sensor updates for MQTT
         mqtt_msgs = []
-        for k, v in jt.data.__dict__.items():
+        for k, v in self.data.__dict__.items():
             mqtt_msgs.append({"topic": f"Juntek-Monitor/{k}", "payload": v})
-            if not args.quiet:
+            if not self.args.quiet:
                 print(f"{k} = {v}")
 
         publish.multiple(mqtt_msgs, hostname=config.MQTT_HOST, auth=auth)
         logger.info("Published updated sensor stats to MQTT")
 
 
-if hasattr(config, "JT_LOG_FILE"):
-    logging.basicConfig(
-        filename=config.JT_LOG_FILE,
-        format="%(asctime)s %(levelname)s:%(message)s",
-        encoding="utf-8",
-        level=logging.WARNING,
+def main():
+    if hasattr(config, "JT_LOG_FILE"):
+        logging.basicConfig(
+            filename=config.JT_LOG_FILE,
+            format="%(asctime)s %(levelname)s:%(message)s",
+            encoding="utf-8",
+            level=logging.WARNING,
+        )
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument(
+        "-i",
+        "--interval",
+        type=int,
+        help="Run nonstop and query the device every <interval> seconds",
     )
-logger = logging.getLogger("Juntek KF Coulometer")
-logger.setLevel(logging.INFO)
+    parser.add_argument(
+        "-q", "--quiet", action="store_true", help="Quiet mode. No output except for errors"
+    )
+    args = parser.parse_args()
 
-auth = {"username": config.MQTT_USER, "password": config.MQTT_PASS}
+    if args.debug:
+        logger.warning("Setting logging level to DEBUG")
+        logger.setLevel(logging.DEBUG)
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-d", "--debug", action="store_true", help="Enable debug logging")
-parser.add_argument(
-    "-i",
-    "--interval",
-    type=int,
-    help="Run nonstop and query the device every <interval> seconds",
-)
-parser.add_argument(
-    "-q", "--quiet", action="store_true", help="Quiet mode. No output except for errors"
-)
-args = parser.parse_args()
+    if not args.quiet:
+        logger.addHandler(logging.StreamHandler())
 
-if args.debug:
-    logger.warning("Setting logging level to DEBUG")
-    logger.setLevel(logging.DEBUG)
+    logger.info("Starting up")
+    jt = JTInfo(args)
+    while jt.bt_device is None:
+        try:
+            jt.locate_device()
+        except DeviceNotFoundException as err:
+            logger.warning("Error searching for Juntek: %s, %s", err, type(err))
+        time.sleep(5)
 
-if not args.quiet:
-    logger.addHandler(logging.StreamHandler())
+    jt.start_loop(args.interval)
 
-logger.info("Starting up")
-jt = JTInfo()
-while jt.bt_device is None:
-    try:
-        jt.locate_device()
-    except DeviceNotFoundException as err:
-        logger.warning("Error searching for Juntek: %s, %s", err, type(err))
-    time.sleep(5)
 
-jt.start_loop(args.interval)
+if __name__ == "main":
+    main()
