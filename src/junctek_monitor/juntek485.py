@@ -9,8 +9,8 @@ from paho.mqtt import publish
 import serial
 import yaml
 
-import config
-from jtdata import JTData
+from . import config, JT_MQTT_YAML
+from .jtdata import JTData
 
 logger = logging.getLogger("Juntek KF Coulometer")
 logger.setLevel(logging.INFO)
@@ -63,7 +63,7 @@ class JTInfo:
         # Publish Home Assistant discovery info to MQTT on every run
         logger.info("Publishing Discovery information to Home Assistant")
 
-        with open("jt_mqtt.yaml", "r", encoding="utf-8") as f:
+        with open(JT_MQTT_YAML, "r", encoding="utf-8") as f:
             y = yaml.safe_load(f)
             for entry in y:
                 if "unique_id" not in entry:

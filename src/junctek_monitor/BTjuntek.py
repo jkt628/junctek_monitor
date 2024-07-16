@@ -11,8 +11,8 @@ import yaml
 from bleak import BleakScanner, BleakClient, BleakError
 from paho.mqtt import publish
 
-import config
-from jtdata import JTData
+from . import config, JT_MQTT_YAML
+from .jtdata import JTData
 
 auth = {"username": config.MQTT_USER, "password": config.MQTT_PASS}
 logger = logging.getLogger("Juntek KF Coulometer")
@@ -225,7 +225,7 @@ class JTInfo:
             msg = "Publishing Discovery information to Home Assistant"
             logger.info(msg)
 
-            with open("jt_mqtt.yaml", "r", encoding="utf-8") as f:
+            with open(JT_MQTT_YAML, "r", encoding="utf-8") as f:
                 y = yaml.safe_load(f)
                 for entry in y:
                     if "unique_id" not in entry:

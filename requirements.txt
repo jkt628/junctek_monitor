@@ -2,3 +2,6 @@ bleak==0.20.2
 paho-mqtt==1.6.1
 PyYAML==6.0
 pyserial==3.5
+# required to build
+build
+setuptools
