@@ -1,0 +1,19 @@
+[project]
+name = "juntek_monitor"
+version = "0.1.0"
+description = "Publish to MQTT from Juntek / Junctek / Koolertron Battery Monitor (KG KF series)"
+authors = [
+    {name = "AnalogThinker and Jack Thomasson", email = "4302889+jkt628@users.noreply.github.com"},
+]
+dependencies = []
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "GPL-3.0-or-later"}
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.pdm]
+distribution = true
