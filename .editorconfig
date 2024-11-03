@@ -1,0 +1,24 @@
+# top-most EditorConfig file
+root = true
+
+# Unix-style newlines with a newline ending every file
+[*]
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+# Set default charset
+[*.{js,py,go,scala,rb,java,html,css,less,sass,md}]
+charset = utf-8
+
+[*akefile*]
+indent_style = tab
+indent_size = 8
+
+[*.py]
+indent_size = 4
+
+[*.{md,yaml,yml}]
+trim_trailing_whitespace = false
