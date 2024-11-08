@@ -18,6 +18,7 @@ def ArgParser() -> argparse.ArgumentParser:
     parser.add_argument("--mqtt_username", type=str, env_var="MQTT_USERNAME")
     parser.add_argument("--mqtt_password", type=str, env_var="MQTT_PASSWORD")
     parser.add_argument("--battery_capacity", type=int, env_var="BATTERY_CAPACITY", required=True)
+    parser.add_argument("--poll", "-i", type=int, env_var="POLL_INTERVAL", default=60)
     parser.add_argument("--juntek_addr", type=str, env_var="JUNTEK_ADDR")
     parser.add_argument("--rs485", type=str, env_var="RS485")
 

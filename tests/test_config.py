@@ -18,6 +18,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(self.config.mqtt_username, "user")
         self.assertEqual(self.config.mqtt_password, "pass")
         self.assertEqual(self.config.battery_capacity, 200)
+        self.assertEqual(self.config.poll, 60)
         self.assertEqual(self.config.juntek_addr, None)
         self.assertEqual(self.config.rs485, "/dev/ttyUSB0")
 
