@@ -44,4 +44,4 @@ class JTData:
                 continue
             value = getattr(self, key)
             if value is not None:
-                yield "Juntek-Monitor/" + key, value
+                yield entry["state_topic"], value

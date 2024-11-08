@@ -1,3 +1,6 @@
+"""Poll device and publish values to MQTT"""
+
+import json
 from abc import ABC, abstractmethod
 from argparse import Namespace
 
@@ -20,6 +23,18 @@ class Device(ABC):
     @abstractmethod
     def poll(self, seconds=60):
         pass
+
+    def announce(self):
+        msgs = []
+        for key, entry in self.jtdata.entries():
+            msgs.append(
+                {
+                    "topic": f"homeassistant/sensor/{key}/config",
+                    "payload": json.dumps(entry, separators=(',', ':')),
+                    "retain": True,
+                }
+            )
+        publish.multiple(msgs, hostname=self.options.mqtt_broker, port=self.options.mqtt_port, auth=self.auth)
 
     def publish(self):
         msgs = []

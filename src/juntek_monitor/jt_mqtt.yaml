@@ -33,7 +33,7 @@
   - Charging
   - Discharging
 
-- name: SoC
+- name: State of Charge
   object_id: jt_soc
   device_class: battery
   unit_of_measurement: '%'
