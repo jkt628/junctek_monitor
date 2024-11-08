@@ -17,7 +17,8 @@ class Operator:
 
 
 class Charging(Operator):
-    CHARGING: Final[list[str]] = ["Discharging","Charging"]
+    CHARGING: Final[list[str]] = ["Discharging", "Charging"]
+
     def apply(self, value: int):
         return self.CHARGING[value]
 
@@ -66,6 +67,7 @@ class BTDevice(Device):
     99 = CRC
     EE = end of stream
     """
+
     RX_CHARACTERISTIC: Final = "0000fff1-0000-1000-8000-00805f9b34fb"
     START_OF_STREAM: Final = "BB"
     END_OF_STREAM: Final = "EE"
@@ -83,11 +85,10 @@ class BTDevice(Device):
         "B1": Parameter("battery_capacity", Divide(10)),
     }
 
-
     def __init__(self, options: Namespace, jtdata: JTData, logger: logging.Logger) -> None:
         super().__init__(options, jtdata)
-        if options.juntec_addr is None:
-            raise ValueError("missing juntec_addr")
+        if options.juntek_addr is None:
+            raise ValueError("missing juntek_addr")
         self.logger = logger
 
     def _callback(self, raw: bytes):
@@ -105,7 +106,7 @@ class BTDevice(Device):
         self.jtdata.reset()
 
         # chunk it to two character strings, each represents one byte
-        b = [data[i: i + 2] for i in range(0, len(data), 2)]
+        b = [data[i : i + 2] for i in range(0, len(data), 2)]
         # parse it backwards and collect values
         i = len(b) - 1
         while i > 0:
@@ -127,10 +128,9 @@ class BTDevice(Device):
         if self.jtdata.jt_ah_remaining is not None:
             self.jtdata.jt_soc = int(100 * self.jtdata.jt_ah_remaining / self.options.battery_capacity)
             # in my experience, 'discharging' always appears with 'jt_ah_remaining'
-            self.jtdata.jt_batt_charging = Charging().apply(not hasattr(self.jtdata, 'discharge'))
+            self.jtdata.jt_batt_charging = Charging().apply(not hasattr(self.jtdata, "discharge"))
 
         self.publish()
-
 
     def poll(self, seconds=60):
         self.values["BTG065"] = self.ble.read(self.RX_CHARACTERISTIC)

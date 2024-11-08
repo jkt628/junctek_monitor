@@ -20,7 +20,7 @@ class TestBTDeviceCallback(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         options = config.ArgParser().parse_args()
-        options.juntec_addr = "aa:bb:cc:dd:ee:ff"
+        options.juntek_addr = "aa:bb:cc:dd:ee:ff"
         options.battery_capacity = 300
         cls.jtdata = JTData()
         cls.btdevice = BTDevice(options, cls.jtdata, logging.getLogger())

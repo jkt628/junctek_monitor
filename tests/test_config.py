@@ -18,15 +18,15 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(self.config.mqtt_username, "user")
         self.assertEqual(self.config.mqtt_password, "pass")
         self.assertEqual(self.config.battery_capacity, 200)
-        self.assertEqual(self.config.juntec_addr, None)
+        self.assertEqual(self.config.juntek_addr, None)
         self.assertEqual(self.config.rs485, "/dev/ttyUSB0")
 
     def test_env(self):
         os.environ["BATTERY_CAPACITY"] = "300"
-        os.environ["JUNTEC_ADDR"] = "aa:bb:cc:dd:ee:ff"
+        os.environ["JUNTEK_ADDR"] = "aa:bb:cc:dd:ee:ff"
         self.config = config.ArgParser().parse_args()
         self.assertEqual(self.config.battery_capacity, int(os.getenv("BATTERY_CAPACITY")))
-        self.assertEqual(self.config.juntec_addr, os.getenv("JUNTEC_ADDR"))
+        self.assertEqual(self.config.juntek_addr, os.getenv("JUNTEK_ADDR"))
 
 
 if __name__ == "__main__":

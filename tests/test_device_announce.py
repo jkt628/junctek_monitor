@@ -28,7 +28,7 @@ class TestDeviceAnnounce(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.options = config.ArgParser().parse_args()
-        cls.options.juntec_addr = "aa:bb:cc:dd:ee:ff"
+        cls.options.juntek_addr = "aa:bb:cc:dd:ee:ff"
         cls.options.battery_capacity = 300
         cls.jtdata = JTData()
 
