@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 import unittest
@@ -14,8 +15,8 @@ from juntek_monitor.jtdata import JTData
 
 
 class Concrete(Device):
-    def _callback(self, raw: bytes):
-        return super()._callback(raw)
+    def _callback(self, _, raw: bytes):
+        return super()._callback(_, raw)
 
     def poll(self, seconds=60):
         return super().poll(seconds)
@@ -35,7 +36,7 @@ class TestDeviceAnnounce(unittest.TestCase):
     def test_announce(self):
         restore = publish.multiple
         publish.multiple = Mock()
-        device = Concrete(self.options, self.jtdata)
+        device = Concrete(self.options, self.jtdata, logging.getLogger())
         device.announce()
         publish.multiple.assert_called_once_with(
             [
