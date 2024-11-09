@@ -86,7 +86,7 @@ class BTDevice(Device):
     }
 
     def __init__(self, options: Namespace, jtdata: JTData, logger: logging.Logger) -> None:
-        super().__init__(options, jtdata)
+        super().__init__(options, jtdata, logger)
         if options.juntek_addr is None:
             raise ValueError("missing juntek_addr")
         self.logger = logger
