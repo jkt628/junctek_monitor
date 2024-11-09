@@ -1,11 +1,42 @@
 """poll BLE and decode values"""
 
+import asyncio
+import datetime
 import logging
+import signal
+import traceback
 from argparse import Namespace
 from typing import Final, NamedTuple
 
+from bleak import BleakClient, BleakError, BleakScanner, BLEDevice
+
 from .device import Device
 from .jtdata import JTData
+
+
+class DeviceNotFoundException(Exception):
+    pass
+
+
+def _add_signal_handlers():
+    loop = asyncio.get_event_loop()
+
+    async def shutdown():
+        """
+        Cancel all running async tasks (other than this one) when called.
+        By catching asyncio.CancelledError, any running task can perform
+        any necessary cleanup when it's cancelled.
+        """
+        tasks = []
+        for task in asyncio.all_tasks(loop):
+            if task is not asyncio.current_task(loop):
+                task.cancel()
+                tasks.append(task)
+        await asyncio.gather(*tasks, return_exceptions=True)
+        loop.stop()
+
+    for sig in [signal.SIGINT, signal.SIGTERM]:
+        loop.add_signal_handler(sig, lambda: asyncio.create_task(shutdown()))
 
 
 class Operator:
@@ -89,11 +120,13 @@ class BTDevice(Device):
         super().__init__(options, jtdata, logger)
         if options.juntek_addr is None:
             raise ValueError("missing juntek_addr")
-        self.logger = logger
+        self.bleDevice: BLEDevice = asyncio.run(self._locate_device(options.poll))
+        self.name = self.bleDevice.name
+        self.logger.info("Located JUNTEK device - name=%s address=%s", self.name, self.bleDevice.address)
 
-    def _callback(self, raw: bytes):
+    def _callback(self, _, raw: bytes):
         data = str(raw.hex()).upper()
-        self.logger.debug("data: %s", data)
+        self.logger.debug("data=%s", data)
 
         # basic checks
         if not data.startswith(self.START_OF_STREAM):
@@ -118,7 +151,7 @@ class BTDevice(Device):
                     value = b[i] + value
                     i -= 1
                 self.jtdata.__dict__[parameter.name] = parameter.operator.apply(int(value))
-                self.logger.debug("%s: %s", parameter.name, self.jtdata.__dict__[parameter.name])
+                self.logger.debug("%s=%s", parameter.name, self.jtdata.__dict__[parameter.name])
             elif b[i] == self.END_OF_STREAM:
                 # sometimes multiple reports concatenate
                 i -= 2  # skip CRC
@@ -132,5 +165,49 @@ class BTDevice(Device):
 
         self.publish()
 
+    async def _locate_device(self, seconds):
+        expire = datetime.datetime.now() + datetime.timedelta(seconds=seconds)
+        self.logger.debug("Scanning for JUNTEK device address=%s until %s", self.options.juntek_addr, expire)
+        while True:
+            device = await BleakScanner.find_device_by_address(self.options.juntek_addr)
+            if device is not None:
+                return device
+            if datetime.datetime.now() > expire:
+                raise DeviceNotFoundException(
+                    "Couldn't find BLE device - is it in range? is another client connected? "
+                    + "Check 'hcitool con' and force disconnect if necessary"
+                )
+            await asyncio.sleep(5)
+
+    async def _poll(self, seconds=60):
+        _add_signal_handlers()
+
+        async with BleakClient(self.bleDevice, timeout=20) as client:
+            await client.start_notify(self.RX_CHARACTERISTIC, self._callback)
+            while True:
+                try:
+                    if not client.is_connected:
+                        self.logger.warning("No connection... Attempting to reconnect")
+                        await client.connect()
+                        await client.start_notify(self.RX_CHARACTERISTIC, self._callback)
+                except EOFError:
+                    self.logger.warning("DBus EOFError")
+                except asyncio.exceptions.TimeoutError:
+                    self.logger.warning("asyncio TimeOutError communicating with device")
+                except BleakError as _err:
+                    self.logger.warning("BleakError - %s", _err)
+                except Exception as _err:
+                    self.logger.warning(
+                        "Error querying Juntek: %s, %s %s",
+                        _err,
+                        type(_err),
+                        traceback.format_exc(),
+                    )
+
+                if not seconds:  # one-shot run, don't loop
+                    break
+
+                await asyncio.sleep(seconds)
+
     def poll(self, seconds=60):
-        self.values["BTG065"] = self.ble.read(self.RX_CHARACTERISTIC)
+        asyncio.run(self._poll(seconds))

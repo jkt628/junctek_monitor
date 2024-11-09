@@ -6,6 +6,7 @@ authors = [
     {name = "AnalogThinker and Jack Thomasson", email = "4302889+jkt628@users.noreply.github.com"},
 ]
 dependencies = [
+    "bleak",
     "configargparse",
     "paho-mqtt",
     "pyyaml",

@@ -17,7 +17,7 @@ def main():
         level=logging.DEBUG if options.debug else logging.INFO,
     )
     logger = logging.getLogger(os.path.basename(os.path.dirname(__file__)))
-    logger.debug("options: %s", options)
+    logger.debug("options=%s", options)
 
     device: Device = None
     if options.juntek_addr is not None:

@@ -1,9 +1,9 @@
 """Poll device and publish values to MQTT"""
 
 import json
+import logging
 from abc import ABC, abstractmethod
 from argparse import Namespace
-import logging
 
 from paho.mqtt import publish
 
@@ -20,7 +20,7 @@ class Device(ABC):
         self.auth = {"username": self.options.mqtt_username, "password": self.options.mqtt_password}
 
     @abstractmethod
-    def _callback(self, raw: bytes):
+    def _callback(self, _, raw: bytes):
         pass
 
     @abstractmethod
@@ -33,11 +33,11 @@ class Device(ABC):
             msgs.append(
                 {
                     "topic": f"homeassistant/sensor/{key}/config",
-                    "payload": json.dumps(entry, separators=(',', ':')),
+                    "payload": json.dumps(entry, separators=(",", ":")),
                     "retain": True,
                 }
             )
-        self.logger.info("Publishing device config: %s", msgs)
+        self.logger.info("Publishing device config=%s", msgs)
         publish.multiple(msgs, hostname=self.options.mqtt_broker, port=self.options.mqtt_port, auth=self.auth)
 
     def publish(self):
@@ -46,5 +46,5 @@ class Device(ABC):
             msgs.append({"topic": key, "payload": value})
         if not msgs:
             return
-        self.logger.info("Publishing values: %s", msgs)
+        self.logger.info("Publishing values=%s", msgs)
         publish.multiple(msgs, hostname=self.options.mqtt_broker, port=self.options.mqtt_port, auth=self.auth)
