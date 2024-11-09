@@ -11,11 +11,12 @@ from .jtdata import JTData
 
 
 class Device(ABC):
-    def __init__(self, options: Namespace, jtdata: JTData, logger: logging.Logger) -> None:
+    def __init__(self, options: Namespace, jtdata: JTData, logger: logging.Logger, name="BTG065") -> None:
         super().__init__()
         self.options = options
         self.jtdata = jtdata
         self.logger = logger
+        self.name = name
         self.auth = {"username": self.options.mqtt_username, "password": self.options.mqtt_password}
 
     @abstractmethod
@@ -26,9 +27,9 @@ class Device(ABC):
     def poll(self, seconds=60):
         pass
 
-    def announce(self, name="BTG065"):
+    def announce(self):
         msgs = []
-        for key, entry in self.jtdata.entries(name):
+        for key, entry in self.jtdata.entries(self.name):
             msgs.append(
                 {
                     "topic": f"homeassistant/sensor/{key}/config",
