@@ -27,11 +27,11 @@ class TestBTDeviceCallback(unittest.TestCase):
         publish.multiple = Mock()
 
     def test_jt_batt_v(self):
-        self.btdevice._callback(bytes.fromhex("bb 13 49 c0 c1 ee"))
+        self.btdevice._callback(None, bytes.fromhex("bb 13 49 c0 c1 ee"))
         self.assertEqual(list(self.jtdata.values()), [("Juntek-Monitor/jt_batt_v", 13.49)])
 
     def test_jt_current(self):
-        self.btdevice._callback(bytes.fromhex("bb 02 10 c1 c1 ee"))
+        self.btdevice._callback(None, bytes.fromhex("bb 02 10 c1 c1 ee"))
         self.assertEqual(list(self.jtdata.values()), [("Juntek-Monitor/jt_current", 2.1)])
 
     # these massive dumps were collected by looping a modified
@@ -518,7 +518,7 @@ BB 90 C1 11 99 D8 10 EE
 BB 29 60 39 D2 91 EE
 BB 01 00 C1 13 33 D8 67 EE
 """
-        self.btdevice._callback(bytes.fromhex(massive))
+        self.btdevice._callback(None, bytes.fromhex(massive))
         self.assertEqual(
             list(self.jtdata.values()),
             [
@@ -774,7 +774,7 @@ BB 20 C1 02 67 D8 33 EE
 BB 30 C1 04 00 D8 48 EE
 BB 58 83 D6 20 EE
 """
-        self.btdevice._callback(bytes.fromhex(massive))
+        self.btdevice._callback(None, bytes.fromhex(massive))
         self.assertEqual(
             list(self.jtdata.values()),
             [
