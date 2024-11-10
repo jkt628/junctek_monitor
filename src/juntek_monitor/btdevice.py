@@ -154,7 +154,7 @@ class BTDevice(Device):
                 i -= 1
 
         if self.jtdata.jt_ah_remaining is not None:
-            self.jtdata.jt_soc = int(100 * self.jtdata.jt_ah_remaining / self.options.battery_capacity)
+            self.jtdata.jt_soc = int(1000 * self.jtdata.jt_ah_remaining / self.options.battery_capacity) / 10.0
             # in my experience, 'discharging' always appears with 'jt_ah_remaining'
             self.jtdata.jt_batt_charging = Charging().apply(not hasattr(self.jtdata, "discharge"))
 
