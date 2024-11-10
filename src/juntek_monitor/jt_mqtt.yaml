@@ -49,9 +49,9 @@
   unit_of_measurement: kWh
 
 - name: Estimated Remaining Time
-  object_id: jt_min_remaining
+  object_id: jt_sec_remaining
   device_class: duration
-  unit_of_measurement: min
+  unit_of_measurement: s
 
 - name: Temperature
   object_id: jt_temp
@@ -59,6 +59,6 @@
   unit_of_measurement: C
 
 - name: Running Time
-  object_id: jt_running
+  object_id: jt_sec_running
   device_class: duration
-  unit_of_measurement: d
+  unit_of_measurement: s

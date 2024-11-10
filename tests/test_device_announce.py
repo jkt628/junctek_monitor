@@ -76,8 +76,8 @@ class TestDeviceAnnounce(unittest.TestCase):
                     "retain": True,
                 },
                 {
-                    "topic": "homeassistant/sensor/jt_min_remaining/config",
-                    "payload": '{"name":"Estimated Remaining Time","object_id":"jt_min_remaining","device_class":"duration","unit_of_measurement":"min","unique_id":"jt_min_remaining","platform":"mqtt","expire_after":180,"state_topic":"Juntek-Monitor/jt_min_remaining","device":{"name":"Juntek Monitor","identifiers":"BTG065"}}',
+                    "topic": "homeassistant/sensor/jt_sec_remaining/config",
+                    "payload": '{"name":"Estimated Remaining Time","object_id":"jt_sec_remaining","device_class":"duration","unit_of_measurement":"s","unique_id":"jt_sec_remaining","platform":"mqtt","expire_after":180,"state_topic":"Juntek-Monitor/jt_sec_remaining","device":{"name":"Juntek Monitor","identifiers":"BTG065"}}',
                     "retain": True,
                 },
                 {
@@ -86,8 +86,8 @@ class TestDeviceAnnounce(unittest.TestCase):
                     "retain": True,
                 },
                 {
-                    "topic": "homeassistant/sensor/jt_running/config",
-                    "payload": '{"name":"Running Time","object_id":"jt_running","device_class":"duration","unit_of_measurement":"d","unique_id":"jt_running","platform":"mqtt","expire_after":180,"state_topic":"Juntek-Monitor/jt_running","device":{"name":"Juntek Monitor","identifiers":"BTG065"}}',
+                    "topic": "homeassistant/sensor/jt_sec_running/config",
+                    "payload": '{"name":"Running Time","object_id":"jt_sec_running","device_class":"duration","unit_of_measurement":"s","unique_id":"jt_sec_running","platform":"mqtt","expire_after":180,"state_topic":"Juntek-Monitor/jt_sec_running","device":{"name":"Juntek Monitor","identifiers":"BTG065"}}',
                     "retain": True,
                 },
             ],

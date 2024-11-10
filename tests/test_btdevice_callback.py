@@ -529,7 +529,7 @@ BB 01 00 C1 13 33 D8 67 EE
                 ("Juntek-Monitor/jt_soc", 98),
                 ("Juntek-Monitor/jt_ah_remaining", 295.738),
                 ("Juntek-Monitor/jt_acc_cap", 7.17856),
-                ("Juntek-Monitor/jt_min_remaining", 170),
+                ("Juntek-Monitor/jt_sec_remaining", 170),
             ],
         )
 
@@ -784,7 +784,7 @@ BB 58 83 D6 20 EE
                 ("Juntek-Monitor/jt_batt_charging", "Discharging"),
                 ("Juntek-Monitor/jt_soc", 99),
                 ("Juntek-Monitor/jt_ah_remaining", 297.639),
-                ("Juntek-Monitor/jt_min_remaining", 13834),
+                ("Juntek-Monitor/jt_sec_remaining", 13834),
                 ("Juntek-Monitor/jt_temp", 24),
             ],
         )

@@ -5,6 +5,7 @@ import unittest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
 from juntek_monitor.jtdata import JTData
+
 jtdata = JTData()
 
 
@@ -14,7 +15,7 @@ class TestJTData(unittest.TestCase):
         known = {
             "jt_batt_v": False,
             "jt_current": False,
-            "jt_running": False,
+            "jt_sec_running": False,
         }
         for key, _ in jtdata.entries():
             known[key] = True
@@ -49,7 +50,9 @@ class TestJTData(unittest.TestCase):
         jtdata.jt_current = 30.2
 
     def test_31_values(self):
-        self.assertEqual(list(jtdata.values()), [("Juntek-Monitor/jt_batt_v", 12.5), ("Juntek-Monitor/jt_current", 30.2)])
+        self.assertEqual(
+            list(jtdata.values()), [("Juntek-Monitor/jt_batt_v", 12.5), ("Juntek-Monitor/jt_current", 30.2)]
+        )
 
     def test_39_reset(self):
         jtdata.reset()

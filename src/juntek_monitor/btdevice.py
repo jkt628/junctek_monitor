@@ -59,14 +59,6 @@ class Divide(Operator):
         return value / self.operand
 
 
-class Time(Operator):
-    def apply(self, value: int):
-        value, seconds = divmod(value, 60)
-        value, minutes = divmod(value, 60)
-        value, hours = divmod(value, 24)
-        return f"{value}d {hours:02d}:{minutes:02d}:{seconds:02d}"
-
-
 class Subtract(Operator):
     def apply(self, value: int):
         return value - self.operand
@@ -109,8 +101,8 @@ class BTDevice(Device):
         "D2": Parameter("jt_ah_remaining", Divide(1000)),
         "D3": Parameter("discharge", Divide(100000)),
         "D4": Parameter("jt_acc_cap", Divide(100000)),
-        "D5": Parameter("jt_running", Time()),
-        "D6": Parameter("jt_min_remaining", Operator()),
+        "D5": Parameter("jt_sec_running", Operator()),
+        "D6": Parameter("jt_sec_remaining", Operator()),
         "D8": Parameter("jt_watts", Divide(100)),
         "D9": Parameter("jt_temp", Subtract(100)),
         "B1": Parameter("battery_capacity", Divide(10)),
