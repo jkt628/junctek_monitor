@@ -8,6 +8,7 @@ from juntek_monitor import config
 from juntek_monitor.btdevice import BTDevice
 from juntek_monitor.device import Device
 from juntek_monitor.jtdata import JTData
+from juntek_monitor.juntek485 import SerialDevice
 
 
 def main():
@@ -23,8 +24,7 @@ def main():
     if options.juntek_addr is not None:
         device = BTDevice(options, JTData(), logger)
     elif options.rs485 is not None:
-        # device = SerialDevice(options, JTData())
-        pass
+        device = SerialDevice(options, JTData(), logger)
     else:
         raise ValueError("must specify juntek_addr or rs485")
     device.initialize()

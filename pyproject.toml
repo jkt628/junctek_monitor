@@ -6,10 +6,11 @@ authors = [
     {name = "AnalogThinker and Jack Thomasson", email = "4302889+jkt628@users.noreply.github.com"},
 ]
 dependencies = [
-    "bleak",
-    "configargparse",
-    "paho-mqtt",
-    "pyyaml",
+    "bleak==0.20.1",
+    "configargparse==1.5.3",
+    "paho-mqtt==1.6.1",
+    "pyserial==3.5",
+    "pyyaml==6.0",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
