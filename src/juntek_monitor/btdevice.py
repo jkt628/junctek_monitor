@@ -112,7 +112,10 @@ class BTDevice(Device):
         super().__init__(options, jtdata, logger)
         if options.juntek_addr is None:
             raise ValueError("missing juntek_addr")
-        self.bleDevice: BLEDevice = asyncio.run(self._locate_device(options.poll))
+        self.bleDevice: BLEDevice = None
+
+    def initialize(self):
+        self.bleDevice = asyncio.run(self._locate_device(self.options.poll))
         self.name = self.bleDevice.name
         self.logger.info("Located JUNTEK device - name=%s address=%s", self.name, self.bleDevice.address)
 

@@ -19,6 +19,9 @@ class Device(ABC):
         self.name = name
         self.auth = {"username": self.options.mqtt_username, "password": self.options.mqtt_password}
 
+    def initialize(self):
+        pass
+
     @abstractmethod
     def _callback(self, _, raw: bytes):
         pass

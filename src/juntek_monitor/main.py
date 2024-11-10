@@ -27,6 +27,7 @@ def main():
         pass
     else:
         raise ValueError("must specify juntek_addr or rs485")
+    device.initialize()
     device.announce()
     device.poll(options.poll)
 
