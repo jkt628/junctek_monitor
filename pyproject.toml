@@ -6,11 +6,11 @@ authors = [
     {name = "AnalogThinker and Jack Thomasson", email = "4302889+jkt628@users.noreply.github.com"},
 ]
 dependencies = [
-    "bleak==0.20.1",
-    "configargparse==1.5.3",
-    "paho-mqtt==1.6.1",
-    "pyserial==3.5",
-    "pyyaml==6.0",
+    "bleak>=0.20.1",
+    "configargparse>=1.5.3",
+    "paho-mqtt>=1.6.1",
+    "pyserial>=3.5",
+    "pyyaml>=6.0",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
@@ -19,6 +19,15 @@ license = {text = "GPL-3.0-or-later"}
 [build-system]
 requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project.scripts]
+juntek_monitor = "juntek_monitor.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.ini", "*.service", "*.yaml"]
 
 [tool.ruff]
 line-length = 120
