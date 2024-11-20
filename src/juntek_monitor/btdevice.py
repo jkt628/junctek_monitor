@@ -118,6 +118,7 @@ class BTDevice(Device):
         self.bleDevice = asyncio.run(self._locate_device(self.options.poll))
         self.name = self.bleDevice.name
         self.logger.info("Located JUNTEK device - name=%s address=%s", self.name, self.bleDevice.address)
+        super().initialize()
 
     def _callback(self, _, raw: bytes):
         data = str(raw.hex()).upper()

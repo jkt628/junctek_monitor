@@ -20,6 +20,7 @@ class SerialDevice(Device):
     def initialize(self):
         if os.stat(self.options.rs485).st_mode & 0o170060 != 0o20060:
             raise ValueError(f"rs485 device={self.options.rs485} must be a group R/W char device")
+        super().initialize()
 
     def _callback(self, _, raw: bytes):
         self.logger.debug("raw=%s", raw)

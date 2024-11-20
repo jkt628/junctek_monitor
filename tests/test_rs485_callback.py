@@ -2,9 +2,6 @@ import logging
 import os
 import sys
 import unittest
-from unittest.mock import Mock
-
-from paho.mqtt import publish
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
@@ -24,7 +21,6 @@ class TestSerialDeviceCallback(unittest.TestCase):
         options.battery_capacity = 300
         cls.jtdata = JTData()
         cls.device = SerialDevice(options, cls.jtdata, logging.getLogger())
-        publish.multiple = Mock()
 
     def test_r50(self):
         self.device._callback(
