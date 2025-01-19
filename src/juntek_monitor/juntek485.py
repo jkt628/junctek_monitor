@@ -46,7 +46,5 @@ class SerialDevice(Device):
 
     def poll(self, seconds=60):
         with serial.Serial(self.options.rs485, baudrate=115200, timeout=1) as ser:
-            while True:
-                ser.write(b":R50=1,2,1,\n")
-                self._callback(None, ser.read_all())
-                time.sleep(seconds)
+            ser.write(b":R50=1,2,1,\n")
+            self._callback(None, ser.read_all())

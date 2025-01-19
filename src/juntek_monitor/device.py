@@ -25,19 +25,23 @@ class Device(ABC):
 
     @abstractmethod
     def _callback(self, _, raw: bytes):
+        """Decode raw data and publish"""
         pass
 
     @abstractmethod
     def poll(self, seconds=60):
+        """Poll device for no more than given seconds"""
         pass
 
     def announce(self):
+        """Announce sensors to home-assistant"""
         for key, entry in self.jtdata.entries(self.name):
             topic = f"homeassistant/sensor/{key}/config"
             self.mqtt.publish(topic, json.dumps(entry, separators=(",", ":")), retain=True)
             self.logger.info("Announcing %s", topic)
 
     def publish(self):
+        """Publish sensor values to home-assistant"""
         for key, value in self.jtdata.values():
             self.mqtt.publish(key, value, retain=True)
             self.logger.info("Publishing key=%s value=%s", key, value)

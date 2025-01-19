@@ -176,11 +176,15 @@ class BTDevice(Device):
             await asyncio.sleep(5)
 
     async def _poll(self, seconds=60):
+        expire = datetime.datetime.now() + datetime.timedelta(seconds=seconds)
         _add_signal_handlers()
 
         async with BleakClient(self.bleDevice, timeout=20) as client:
             await client.start_notify(self.RX_CHARACTERISTIC, self._callback)
             while True:
+                remaining = expire - datetime.datetime.now()
+                if remaining.total_seconds <= 0:
+                    break
                 try:
                     if not client.is_connected:
                         self.logger.warning("No connection... Attempting to reconnect")
@@ -200,10 +204,10 @@ class BTDevice(Device):
                         traceback.format_exc(),
                     )
 
-                if not seconds:  # one-shot run, don't loop
-                    break
+                await asyncio.sleep(remaining.total_seconds)
 
-                await asyncio.sleep(seconds)
+            await client.stop_notify(self.RX_CHARACTERISTIC)
+
 
     def poll(self, seconds=60):
         asyncio.run(self._poll(seconds))
